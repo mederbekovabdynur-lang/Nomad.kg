@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f3d3e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kyrgyzstan">
+<title>Kyrgyzstan Guide</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --bg:#f5f3ee; --card:#ffffff; --text:#1c2a2b; --muted:#6b7a7b; --line:#e6e2d8;
+  --primary:#0f3d3e; --accent:#e8412c; --gold:#f2b632; --chip:#ece8dd;
+  --shadow:0 6px 24px rgba(15,61,62,.12); --nav-h:62px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0e1819; --card:#16262a; --text:#eaf1f0; --muted:#93a6a7; --line:#223a3e; --chip:#1f3438; --shadow:0 6px 24px rgba(0,0,0,.4)}
+  .phrase b{color:var(--gold)} nav button.on{color:var(--gold)}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);color:var(--text);display:flex;flex-direction:column;
+  height:100vh;height:100dvh;overflow:hidden;-webkit-text-size-adjust:100%;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+
+header{
+  position:relative;flex:0 0 auto;padding:calc(env(safe-area-inset-top) + 12px) 14px 14px;
+  background:linear-gradient(135deg,#0f3d3e 0%,#1b6b6a 60%,#2b8a86 100%);color:#fff;overflow:hidden;
+}
+header::after{
+  content:"";position:absolute;right:-10px;bottom:-2px;width:220px;height:70px;opacity:.22;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 70'%3E%3Cpath fill='white' d='M0 70 L40 20 L58 38 L90 0 L130 48 L150 30 L190 70Z'/%3E%3C/svg%3E") no-repeat right bottom/contain;
+}
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative;z-index:1}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.sun{width:38px;height:38px;border-radius:50%;flex:none;background:radial-gradient(circle,#fff 0 22%,var(--gold) 23% 100%);box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+h1{margin:0;font-size:18px;line-height:1.15}
+.sub{font-size:12px;opacity:.8;margin-top:2px}
+.hr{display:flex;gap:6px;align-items:center;flex:none}
+.pill{background:rgba(255,255,255,.18);padding:7px 11px;border-radius:999px;font-size:12px;font-weight:700;color:#fff;border:0}
+select.pill{appearance:none;-webkit-appearance:none;padding-right:11px;cursor:pointer}
+select.pill option{color:#111;background:#fff}
+@media (max-width:360px){.sub{display:none}.pill{padding:6px 8px;font-size:11px}}
+
+main{flex:1 1 auto;position:relative;min-height:0}
+.view{position:absolute;inset:0;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.view.active{display:block}
+#view-map{overflow:hidden}
+#map{position:absolute;inset:0;background:#cfe3e1}
+.pad{padding:14px 14px 28px;max-width:760px;margin:0 auto}
+
+.chips{position:absolute;z-index:500;top:10px;left:0;right:0;display:flex;gap:8px;padding:0 10px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 13px;border-radius:999px;background:var(--card);color:var(--text);font-size:13px;font-weight:600;box-shadow:var(--shadow);white-space:nowrap}
+.chip.on{background:var(--primary);color:#fff}
+.fab{position:absolute;z-index:500;right:12px;bottom:12px;width:48px;height:48px;border-radius:50%;background:var(--card);box-shadow:var(--shadow);font-size:22px;display:grid;place-items:center}
+.sheet{
+  position:absolute;z-index:600;left:10px;right:10px;bottom:10px;max-width:520px;margin:0 auto;
+  background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:16px;
+  transform:translateY(130%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
+}
+.sheet.open{transform:none}
+.sheet .x{position:absolute;top:8px;right:10px;width:32px;height:32px;border-radius:50%;background:var(--chip);font-size:16px}
+.sheet h3{margin:0 34px 6px 0;font-size:18px}
+.sheet p{margin:6px 0;font-size:14px;line-height:1.45}
+.tag{display:inline-block;font-size:12px;padding:3px 9px;border-radius:999px;background:var(--chip);color:var(--muted);margin:0 6px 4px 0}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{flex:1 1 30%;text-align:center;padding:11px 8px;border-radius:12px;font-weight:700;font-size:13px;background:var(--primary);color:#fff;text-decoration:none;display:block}
+.btn.alt{background:var(--chip);color:var(--text)}
+.pin{width:38px;height:38px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--accent);display:grid;place-items:center;border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.pin span{transform:rotate(45deg);font-size:18px;line-height:1}
+.pin.city{background:#2b6cb0}.pin.nature{background:#2e8b57}.pin.culture{background:#b7791f}.pin.market{background:#e8412c}
+.me{width:16px;height:16px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 6px rgba(26,115,232,.25)}
+.nomap{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:30px;color:var(--muted)}
+
+.search{width:100%;padding:13px 16px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-size:16px;outline:none;margin-bottom:10px}
+.search:focus{border-color:var(--primary)}
+.seg{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg .chip{box-shadow:none;border:1px solid var(--line)}
+.note{font-size:12px;color:var(--muted);margin:2px 2px 12px;line-height:1.4}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:12px;margin-bottom:8px;border:1px solid var(--line)}
+.item.go{cursor:pointer}
+.ico{width:44px;height:44px;border-radius:12px;background:var(--chip);display:grid;place-items:center;font-size:22px;flex:none}
+.info{flex:1;min-width:0}
+.info b{display:block;font-size:15px}
+.info small{color:var(--muted);font-size:12px}
+.price{text-align:right;flex:none}
+.price b{font-size:15px;display:block}
+.price small{font-size:11px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:6px;margin-left:4px}
+.qty button{width:30px;height:30px;border-radius:50%;background:var(--chip);font-size:18px;font-weight:700;line-height:1}
+.qty button.plus{background:var(--primary);color:#fff}
+.qty span{min-width:16px;text-align:center;font-weight:700;font-size:14px}
+.basket{position:sticky;bottom:0;margin-top:10px;padding:12px 14px;border-radius:16px;background:var(--primary);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.basket b{font-size:18px}
+.basket button{background:rgba(255,255,255,.18);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;font-weight:600}
+
+.place{background:var(--card);border-radius:20px;overflow:hidden;margin-bottom:12px;border:1px solid var(--line)}
+.place .cover{height:92px;display:flex;align-items:flex-end;padding:12px 14px;font-size:38px;color:#fff;background:linear-gradient(135deg,var(--c1,#1b6b6a),var(--c2,#2b8a86))}
+.place .body{padding:12px 14px 14px}
+.place h3{margin:0 0 6px;font-size:17px}
+.place p{margin:6px 0;font-size:14px;line-height:1.45;color:var(--muted)}
+
+.card{background:var(--card);border-radius:18px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+.card h2{margin:0 0 10px;font-size:16px}
+.row{display:flex;gap:8px;align-items:center}
+.row input{flex:1;min-width:0;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-size:16px}
+.phrase{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.phrase:last-child{border:0}
+.phrase b{color:var(--primary);text-align:right}
+.sos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sos a{display:block;padding:12px;border-radius:14px;background:var(--chip);text-decoration:none;color:var(--text);font-size:13px}
+.sos a b{display:block;font-size:20px;color:var(--accent)}
+.links a{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:12px;background:var(--chip);margin-bottom:8px;text-decoration:none;color:var(--text);font-weight:600;font-size:14px}
+.links a small{color:var(--muted);font-weight:500}
+.links a:last-child{margin-bottom:0}
+
+nav{flex:0 0 auto;display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--muted);padding:0 2px}
+nav button i{font-style:normal;font-size:21px;filter:grayscale(1);opacity:.7;transition:.2s}
+nav button.on{color:var(--primary)}
+nav button.on i{filter:none;opacity:1;transform:translateY(-1px) scale(1.1)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:2000;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.net{display:none;background:#b7791f;color:#fff;font-size:12px;text-align:center;padding:5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div class="brand">
+      <div class="sun"></div>
+      <div><h1 data-i="title"></h1><div class="sub" data-i="sub"></div></div>
+    </div>
+    <div class="hr">
+      <div class="pill" id="rateBadge"></div>
+      <select class="pill" id="langSel" aria-label="Language">
+        <option value="ru">Русский</option>
+        <option value="en">English</option>
+        <option value="ky">Кыргызча</option>
+        <option value="zh">中文</option>
+      </select>
+    </div>
+  </div>
+</header>
+<div class="net" id="net" data-i="offline"></div>
+
+<main>
+  <!-- КАРТА -->
+  <section class="view active" id="view-map">
+    <div id="map"></div>
+    <div class="nomap" id="nomap" data-i="nomap"></div>
+    <div class="chips" id="mapChips"></div>
+    <button class="fab" id="locBtn" aria-label="GPS">📍</button>
+    <div class="sheet" id="sheet">
+      <button class="x" id="sheetX" aria-label="Close">✕</button>
+      <h3 id="sTitle"></h3>
+      <div id="sTags"></div>
+      <p id="sDesc"></p>
+      <p id="sTip"></p>
+      <div class="btns">
+        <a class="btn" id="sRoute" target="_blank" rel="noopener" data-i="route"></a>
+        <a class="btn alt" id="sHotel" target="_blank" rel="noopener" data-i="hotels"></a>
+        <a class="btn alt" id="sBus" target="_blank" rel="noopener" data-i="bus" style="display:none"></a>
+        <button class="btn alt" id="sMore" data-i="allPlaces"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЦЕНЫ -->
+  <section class="view" id="view-prices">
+    <div class="pad">
+      <input class="search" id="pSearch" type="search" data-ph="search">
+      <div class="seg" id="pCats"></div>
+      <div class="note" data-i="priceNote"></div>
+      <div id="pList"></div>
+      <div class="basket">
+        <div><small data-i="yourList"></small><br><b id="bSom">0</b> <small id="bUsd"></small></div>
+        <button id="bClear" data-i="clear"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- МЕСТА -->
+  <section class="view" id="view-places"><div class="pad" id="placesList"></div></section>
+
+  <!-- МАРШРУТЫ -->
+  <section class="view" id="view-routes">
+    <div class="pad">
+      <div class="seg" id="rSeg"></div>
+      <div class="note" id="rNote"></div>
+      <div class="btns" style="margin:0 0 12px">
+        <button class="btn" id="rShow" data-i="showRoute"></button>
+        <button class="btn alt" id="rHide" data-i="hideRoute"></button>
+      </div>
+      <div id="rList"></div>
+      <div class="note" data-i="roadNote"></div>
+    </div>
+  </section>
+
+  <!-- ПОЛЕЗНОЕ -->
+  <section class="view" id="view-tools">
+    <div class="pad">
+      <div class="card">
+        <h2 data-i="installH"></h2>
+        <div class="note" data-i="installTxt"></div>
+        <button class="btn" id="installBtn" style="display:none;width:100%" data-i="installBtn"></button>
+      </div>
+      <div class="card">
+  <h2 data-i="busH"></h2>
+  <div class="note" data-i="busTxt"></div>
+  <div class="btns" style="margin:0 0 10px">
+    <a class="btn" href="https://2gis.kg/bishkek" target="_blank" rel="noopener" data-i="gisBishkek"></a>
+    <a class="btn alt" id="myCityBtn" target="_blank" rel="noopener" data-i="myCity"></a>
+  </div>
+  <div class="note" data-i="night"></div>
+</div>
+      <div class="card links">
+        <h2 data-i="linksH"></h2>
+        <a href="https://www.booking.com/country/kg.html" target="_blank" rel="noopener">Booking.com <small data-i="lStay"></small></a>
+        <a href="https://www.airbnb.com/" target="_blank" rel="noopener">Airbnb <small data-i="lStay"></small></a>
+        <a href="https://indrive.com/" target="_blank" rel="noopener">inDrive <small data-i="lTaxi"></small></a>
+        <a href="https://go.yandex/" target="_blank" rel="noopener">Yandex Go <small data-i="lTaxi"></small></a>
+        <a href="https://2gis.kg/" target="_blank" rel="noopener">2GIS <small data-i="lMaps"></small></a>
+      </div>
+      <div class="card">
+        <h2 data-i="convH"></h2>
+        <div class="row"><input id="cSom" type="number" inputmode="decimal" data-ph="som2"><span data-i="somU"></span></div>
+        <div class="row" style="margin-top:8px"><input id="cUsd" type="number" inputmode="decimal" data-ph="usd"><span>$</span></div>
+        <div class="row" style="margin-top:8px"><span style="font-size:13px;color:var(--muted)" data-i="rateL"></span><input id="cRate" type="number" inputmode="decimal" step="0.1"><span data-i="somU"></span></div>
+        <div class="note" style="margin-top:8px" data-i="rateNote"></div>
+      </div>
+      <div class="card"><h2 data-i="phrasesH"></h2><div id="phrases"></div></div>
+      <div class="card">
+        <h2 data-i="sosH"></h2>
+        <div class="sos">
+          <a href="tel:112"><b>112</b><span data-i="s112"></span></a>
+          <a href="tel:102"><b>102</b><span data-i="s102"></span></a>
+          <a href="tel:103"><b>103</b><span data-i="s103"></span></a>
+          <a href="tel:101"><b>101</b><span data-i="s101"></span></a>
+        </div>
+      </div>
+      <div class="card"><h2 data-i="tipsH"></h2><div id="tips"></div></div>
+    </div>
+  </section>
+</main>
+
+<nav id="nav">
+  <button class="on" data-v="map"><i>🗺️</i><span data-i="nMap"></span></button>
+  <button data-v="prices"><i>🛒</i><span data-i="nPrices"></span></button>
+  <button data-v="places"><i>🏔️</i><span data-i="nPlaces"></span></button>
+  <button data-v="routes"><i>🧭</i><span data-i="nRoutes"></span></button>
+  <button data-v="tools"><i>🧰</i><span data-i="nTools"></span></button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ================= ПЕРЕВОДЫ: ru / en / ky / zh ================= */
+const KY=['Саламатсызбы','Салам','Рахмат','Эч нерсе эмес','Ооба / Жок','Канча турат?','Кымбат','Даамдуу','Суу','Нан','Даарат кана кайда?','Жардам бериңиз','Кош болуңуз','Кечиресиз'];
+const T={
+ru:{
+ title:'Кыргызстан',sub:'Гид для туристов',offline:'Нет интернета — работает сохранённая версия',
+ nomap:'Карта не загрузилась. Проверьте интернет и обновите страницу.',
+ route:'🧭 Маршрут',hotels:'🏨 Отели',allPlaces:'Все места',search:'Поиск: хлеб, плов, такси…',
+ priceNote:'Цены ориентировочные (в сомах) и зависят от города и сезона. Нажимайте «+», чтобы посчитать бюджет.',
+ yourList:'Ваш список',clear:'Очистить',som:'сом',
+ installH:'📲 Установить как приложение',
+ installTxt:'Добавьте гид на главный экран — он откроется как приложение и будет работать без интернета (карта — только просмотренные участки). iPhone: Safari → «Поделиться» → «На экран Домой». Android: меню браузера → «Установить приложение».',
+ installBtn:'Установить',
+ linksH:'🔗 Жильё и такси',lStay:'жильё',lTaxi:'такси',lMaps:'карты',
+ convH:'💱 Конвертер валют',somU:'сом',som2:'Сомы',usd:'Доллары',rateL:'Курс: 1 $ =',
+ rateNote:'Курс можно изменить вручную — актуальный смотрите в банке или обменнике.',
+ phrasesH:'🗣 Полезные фразы',sosH:'🚨 Экстренные номера',
+ s112:'Единая служба',s102:'Милиция',s103:'Скорая помощь',s101:'Пожарные',tipsH:'💡 Советы',
+ tips:['Наличные сомы нужны на рынках и в маршрутках. В городах работают карты и QR-оплата.','Для озёр и гор берите тёплую одежду — даже летом ночью холодно.','Пейте бутилированную воду; торговаться на базарах — нормально.','Лучшее время: июнь–сентябрь для гор и Иссык-Куля, апрель–май и сентябрь для городов.'],
+ nMap:'Карта',nPrices:'Цены',nPlaces:'Места',nRoutes:'Маршруты',nTools:'Полезное',
+ geo:'Определяю местоположение…',geoNo:'Геолокация недоступна',geoErr:'Не удалось получить местоположение',
+ nothing:'Ничего не найдено',onMap:'🗺 На карте',
+ showRoute:'🗺 Показать на карте',hideRoute:'✕ Скрыть линию',roadNote:'Горные дороги медленные: закладывайте запас по времени.',
+ cats:{all:'Все',city:'🏙 Города',nature:'🌲 Природа',culture:'🏛 Культура',market:'🧺 Рынки'},
+ pcats:{all:'Все',food:'🛒 Продукты',eat:'🍽 Еда',move:'🚌 Транспорт',misc:'🏨 Жильё и разное',souv:'🎁 Сувениры'},
+ phrases:['Здравствуйте','Привет','Спасибо','Пожалуйста','Да / Нет','Сколько стоит?','Дорого','Вкусно','Вода','Хлеб','Где туалет?','Помогите','До свидания','Извините']
+},
+en:{
+ title:'Kyrgyzstan',sub:'Tourist guide',offline:'No internet — using the saved version',
+ nomap:'The map failed to load. Check your connection and refresh.',
+ route:'🧭 Directions',hotels:'🏨 Hotels',allPlaces:'All places',search:'Search: bread, plov, taxi…',
+ priceNote:'Prices are approximate (in som) and vary by city and season. Tap “+” to build a budget.',
+ yourList:'Your list',clear:'Clear',som:'som',
+ installH:'📲 Install as an app',
+ installTxt:'Add the guide to your home screen — it opens like an app and works offline (map: only areas you viewed before). iPhone: Safari → Share → Add to Home Screen. Android: browser menu → Install app.',
+ installBtn:'Install',
+ linksH:'🔗 Stay & taxi',lStay:'stay',lTaxi:'taxi',lMaps:'maps',
+ convH:'💱 Currency converter',somU:'som',som2:'Som',usd:'Dollars',rateL:'Rate: 1 $ =',
+ rateNote:'You can edit the rate — check a bank or exchange office for the current one.',
+ phrasesH:'🗣 Useful phrases',sosH:'🚨 Emergency numbers',
+ s112:'General emergency',s102:'Police',s103:'Ambulance',s101:'Fire',tipsH:'💡 Tips',
+ tips:['Carry cash in som for markets and minibuses. Cards and QR payments work in cities.','Bring warm clothes for lakes and mountains — nights are cold even in summer.','Drink bottled water; bargaining at bazaars is normal.','Best time: June–September for mountains and Issyk-Kul, April–May and September for cities.'],
+ nMap:'Map',nPrices:'Prices',nPlaces:'Places',nRoutes:'Routes',nTools:'Tools',
+ geo:'Finding your location…',geoNo:'Geolocation unavailable',geoErr:'Could not get your location',
+ nothing:'Nothing found',onMap:'🗺 On map',
+ showRoute:'🗺 Show on map',hideRoute:'✕ Hide line',roadNote:'Mountain roads are slow — leave extra time.',
+ cats:{all:'All',city:'🏙 Cities',nature:'🌲 Nature',culture:'🏛 Culture',market:'🧺 Markets'},
+ pcats:{all:'All',food:'🛒 Groceries',eat:'🍽 Food',move:'🚌 Transport',misc:'🏨 Stay & other',souv:'🎁 Souvenirs'},
+ phrases:['Hello','Hi','Thank you','You are welcome','Yes / No','How much?','Expensive','Delicious','Water','Bread','Where is the toilet?','Help','Goodbye','Excuse me']
+},
+ky:{
+ title:'Кыргызстан',sub:'Туристтерге гид',offline:'Интернет жок — сакталган версия иштеп жатат',
+ nomap:'Карта жүктөлгөн жок. Интернетти текшерип, баракчаны жаңыртыңыз.',
+ route:'🧭 Маршрут',hotels:'🏨 Мейманканалар',allPlaces:'Бардык жерлер',search:'Издөө: нан, палоо, такси…',
+ priceNote:'Баалар болжолдуу (сом менен), шаарга жана мезгилге жараша өзгөрөт. Бюджетти эсептөө үчүн «+» басыңыз.',
+ yourList:'Тизмеңиз',clear:'Тазалоо',som:'сом',
+ installH:'📲 Колдонмо катары орнотуу',
+ installTxt:'Гидди башкы экранга кошуңуз — колдонмодой ачылат жана интернетсиз иштейт (карта — мурун көргөн жерлер гана). iPhone: Safari → «Бөлүшүү» → «Башкы экранга». Android: браузер менюсу → «Колдонмону орнотуу».',
+ installBtn:'Орнотуу',
+ linksH:'🔗 Жайгашуу жана такси',lStay:'жайгашуу',lTaxi:'такси',lMaps:'карталар',
+ convH:'💱 Валюта конвертери',somU:'сом',som2:'Сом',usd:'Доллар',rateL:'Курс: 1 $ =',
+ rateNote:'Курсту өзүңүз өзгөртө аласыз — акыркы курсту банктан же алмаштыргычтан билиңиз.',
+ phrasesH:'🗣 Пайдалуу сөздөр',sosH:'🚨 Шашылыш номерлер',
+ s112:'Бирдиктүү кызмат',s102:'Милиция',s103:'Тез жардам',s101:'Өрт өчүрүү',tipsH:'💡 Кеңештер',
+ tips:['Базарларда жана маршруткаларда накталай сом керек. Шаарларда карта жана QR төлөм иштейт.','Көлгө жана тоого жылуу кийим алыңыз — жайында да түнкүсүн суук.','Бөтөлкөдөгү суу ичиңиз; базарда соодалашуу кадимки көрүнүш.','Эң жакшы мезгил: тоо жана Ысык-Көл үчүн июнь–сентябрь, шаарлар үчүн апрель–май жана сентябрь.'],
+ nMap:'Карта',nPrices:'Баа',nPlaces:'Жерлер',nRoutes:'Маршрут',nTools:'Пайдалуу',
+ geo:'Жайгашкан жер аныкталууда…',geoNo:'Геолокация жеткиликсиз',geoErr:'Жайгашкан жерди аныктоо мүмкүн болгон жок',
+ nothing:'Эч нерсе табылган жок',onMap:'🗺 Картада',
+ showRoute:'🗺 Картада көрсөтүү',hideRoute:'✕ Сызыкты жашыруу',roadNote:'Тоо жолдору жай: убакытты запас менен алыңыз.',
+ cats:{all:'Баары',city:'🏙 Шаарлар',nature:'🌲 Табият',culture:'🏛 Маданият',market:'🧺 Базарлар'},
+ pcats:{all:'Баары',food:'🛒 Азык-түлүк',eat:'🍽 Тамак',move:'🚌 Транспорт',misc:'🏨 Жашоо жана башка',souv:'🎁 Сувенирлер'},
+ phrases:KY
+},
+zh:{
+ title:'吉尔吉斯斯坦',sub:'游客指南',offline:'无网络 — 正在使用已保存版本',
+ nomap:'地图加载失败。请检查网络并刷新页面。',
+ route:'🧭 路线',hotels:'🏨 酒店',allPlaces:'所有景点',search:'搜索：面包、手抓饭、出租车…',
+ priceNote:'价格仅供参考（索姆），因城市和季节而异。点“+”可计算预算。',
+ yourList:'我的清单',clear:'清空',som:'索姆',
+ installH:'📲 安装为应用',
+ installTxt:'将指南添加到主屏幕，像应用一样打开并可离线使用（地图仅限已浏览区域）。iPhone：Safari → 分享 → 添加到主屏幕。Android：浏览器菜单 → 安装应用。',
+ installBtn:'安装',
+ linksH:'🔗 住宿与打车',lStay:'住宿',lTaxi:'打车',lMaps:'地图',
+ convH:'💱 货币换算',somU:'索姆',som2:'索姆',usd:'美元',rateL:'汇率：1 $ =',
+ rateNote:'可手动修改汇率，实时汇率请以银行或兑换点为准。',
+ phrasesH:'🗣 常用语',sosH:'🚨 紧急电话',
+ s112:'统一急救',s102:'警察',s103:'救护车',s101:'消防',tipsH:'💡 小贴士',
+ tips:['集市和小巴需要索姆现金，城市里可用银行卡和二维码支付。','去湖区和山区请带保暖衣物，夏季夜晚也很冷。','请喝瓶装水；在集市讨价还价很正常。','最佳时间：山区和伊塞克湖 6–9 月，城市 4–5 月及 9 月。'],
+ nMap:'地图',nPrices:'价格',nPlaces:'景点',nRoutes:'路线',nTools:'实用',
+ geo:'正在定位…',geoNo:'无法使用定位',geoErr:'无法获取位置',
+ nothing:'未找到',onMap:'🗺 查看地图',
+ showRoute:'🗺 在地图上显示',hideRoute:'✕ 隐藏路线',roadNote:'山路较慢，请预留充足时间。',
+ cats:{all:'全部',city:'🏙 城市',nature:'🌲 自然',culture:'🏛 文化',market:'🧺 市场'},
+ pcats:{all:'全部',food:'🛒 食品',eat:'🍽 餐饮',move:'🚌 交通',misc:'🏨 住宿及其他',souv:'🎁 纪念品'},
+ phrases:['你好','嗨','谢谢','不客气','是 / 不是','多少钱？','太贵了','好吃','水','面包','厕所在哪里？','请帮帮我','再见','打扰一下']
+}};
+/* ключ ru/en/ky/zh для данных: [ru, en, ky, zh] */
+/* ===== 2ГИС + транспорт Бишкека ===== */
+Object.assign(T.ru,{
+  route:'🧭 В 2ГИС',bus:'🚌 Автобус',busH:'🚌 Транспорт Бишкека',
+  busTxt:'Автобусы, троллейбусы и маршрутки Бишкека: откройте маршрут до любого места в 2ГИС (кнопка «Автобус» у мест в городе) или следите за транспортом в реальном времени в приложении мэрии «Мой город».',
+  night:'Ночные автобусы (23:00–05:00): №3, 13, 16, 19, 35, 45, 55 — по данным мэрии, список может измениться.',
+  gisBishkek:'🗺 2ГИС Бишкек',myCity:'📲 «Мой город»'
+});
+Object.assign(T.en,{
+  route:'🧭 Open in 2GIS',bus:'🚌 Bus',busH:'🚌 Bishkek public transport',
+  busTxt:'Buses, trolleybuses and minibuses in Bishkek: open a route to any place in 2GIS (“Bus” button on places in the city) or track vehicles live in the city hall’s “Moy Gorod” (My City) app.',
+  night:'Night buses (23:00–05:00): No. 3, 13, 16, 19, 35, 45, 55 — per the city hall; the list may change.',
+  gisBishkek:'🗺 2GIS Bishkek',myCity:'📲 “Moy Gorod” app'
+});
+Object.assign(T.ky,{
+  route:`🧭 2ГИС'те`,bus:'🚌 Автобус',busH:'🚌 Бишкектин коомдук транспорту',
+  busTxt:`Бишкектеги автобус, троллейбус жана маршруткалар: каалаган жерге маршрутту 2ГИС'те ачыңыз (шаардагы жерлердеги «Автобус» баскычы) же мэриянын «Мой город» колдонмосунан транспортту онлайн көрүңүз.`,
+  night:'Түнкү автобустар (23:00–05:00): №3, 13, 16, 19, 35, 45, 55 — мэриянын маалыматы боюнча, тизме өзгөрүшү мүмкүн.',
+  gisBishkek:'🗺 2ГИС Бишкек',myCity:'📲 «Мой город»'
+});
+Object.assign(T.zh,{
+  route:'🧭 用2GIS打开',bus:'🚌 公交',busH:'🚌 比什凯克公共交通',
+  busTxt:'比什凯克的公交、无轨电车和小巴：在2GIS中查看前往任意景点的路线（市内景点有“公交”按钮），或在市政府的“Moy Gorod（我的城市）”应用中实时查看车辆位置。',
+  night:'夜班公交（23:00–05:00）：3、13、16、19、35、45、55路——来自市政府信息，可能有变动。',
+  gisBishkek:'🗺 2GIS 比什凯克',myCity:'📲 “Moy Gorod”应用'
+});
+const LI={ru:0,en:1,ky:2,zh:3};
+const LOC={ru:'ru-RU',en:'en-US',ky:'ru-RU',zh:'zh-CN'};
+const DAYL={ru:n=>`День ${n}`,en:n=>`Day ${n}`,ky:n=>`${n}-күн`,zh:n=>`第${n}天`};
+const DAYSL={ru:n=>`${n} дн.`,en:n=>`${n} days`,ky:n=>`${n} күн`,zh:n=>`${n}天`};
+
+/* ================= ДАННЫЕ ================= */
+const S={
+ all:['Круглый год','Year-round','Жыл бою','全年'],
+ sum:['Июнь–сентябрь','June–September','Июнь–сентябрь','6月–9月'],
+ js:['Июль–август','July–August','Июль–август','7月–8月'],
+ ao:['Апрель–октябрь','April–October','Апрель–октябрь','4月–10月'],
+ ms:['Май–сентябрь','May–September','Май–сентябрь','5月–9月'],
+ mo:['Май–октябрь','May–October','Май–октябрь','5月–10月']
+};
+const PLACES=[
+{id:1,cat:'city',e:'🏛️',lat:42.8766,lng:74.6035,c:['#2b6cb0','#4299e1'],s:S.all,
+ n:['Площадь Ала-Тоо','Ala-Too Square','Ала-Тоо аянты','阿拉套广场'],
+ d:['Главная площадь Бишкека: музей, смена караула у флага, фонтаны.','Bishkek’s main square: museum, flag guard ceremony, fountains.','Бишкектин башкы аянты: музей, желек жанындагы кароол алмашуу, фонтандар.','比什凯克中心广场：博物馆、国旗换岗仪式、喷泉。'],
+ t:['Вечером красиво подсвечивается, рядом много кафе.','Lit up beautifully in the evening; many cafes nearby.','Кечинде ажайып жарык берилет, жакын жерде кафелер көп.','晚上灯光很美，附近有很多咖啡馆。']},
+{id:2,cat:'market',e:'🧺',lat:42.8760,lng:74.5690,c:['#c53030','#fc8181'],s:S.all,
+ n:['Ошский базар (Бишкек)','Osh Bazaar (Bishkek)','Ош базары (Бишкек)','奥什市场（比什凯克）'],
+ d:['Колоритный рынок: специи, сухофрукты, мёд, лепёшки, сувениры.','Colorful market: spices, dried fruit, honey, flatbread, souvenirs.','Түстүү базар: татымалдар, кургатылган жемиштер, бал, нан, сувенирлер.','热闹的市场：香料、干果、蜂蜜、馕、纪念品。'],
+ t:['Торгуйтесь вежливо, следите за карманами.','Bargain politely and watch your pockets.','Сылык соодалашыңыз, чөнтөгүңүздү байкаңыз.','礼貌砍价，注意保管财物。']},
+{id:3,cat:'nature',e:'⛰️',lat:42.5600,lng:74.4880,c:['#276749','#68d391'],s:S.sum,
+ n:['Ущелье Ала-Арча','Ala-Archa Gorge','Ала-Арча капчыгайы','阿拉阿恰峡谷'],
+ d:['Нацпарк в часе от Бишкека: ледники, водопад, треки любого уровня.','National park an hour from Bishkek: glaciers, a waterfall, trails for all levels.','Бишкектен бир саат жолдогу улуттук парк: мөңгүлөр, шаркыратма, ар кандай деңгээлдеги жолдор.','距比什凯克一小时车程的国家公园：冰川、瀑布、各级徒步路线。'],
+ t:['Есть входной сбор. Нужны куртка и крепкая обувь.','Entrance fee applies. Bring a jacket and sturdy shoes.','Кирүү акысы бар. Куртка жана бекем бут кийим алыңыз.','需购买门票。请带外套和结实的鞋。']},
+{id:4,cat:'culture',e:'🗼',lat:42.7456,lng:75.2506,c:['#b7791f','#f6ad55'],s:S.ao,
+ n:['Башня Бурана','Burana Tower','Бурана мунарасы','布拉纳塔'],
+ d:['Минарет X века — остаток древнего города Баласагун на Шёлковом пути.','A 10th-century minaret from the ancient Silk Road city of Balasagun.','X кылымдагы мунара — Жибек жолундагы байыркы Баласагын шаарынын калдыгы.','10世纪宣礼塔，是丝绸之路古城八剌沙衮的遗迹。'],
+ t:['Можно подняться на башню. Удобно по пути на Иссык-Куль.','You can climb the tower. Easy stop on the way to Issyk-Kul.','Мунарага чыгууга болот. Ысык-Көлгө баратканда ыңгайлуу.','可以登塔，去伊塞克湖途中顺路。']},
+{id:5,cat:'city',e:'🏖️',lat:42.6490,lng:77.0850,c:['#2b6cb0','#63b3ed'],s:S.sum,
+ n:['Чолпон-Ата','Cholpon-Ata','Чолпон-Ата','乔尔蓬阿塔'],
+ d:['Курорт на северном берегу Иссык-Куля: пляжи, петроглифы, лодки.','Resort on Issyk-Kul’s north shore: beaches, petroglyphs, boat trips.','Ысык-Көлдүн түндүк жээгиндеги курорт: пляждар, петроглифтер, кайыктар.','伊塞克湖北岸度假地：海滩、岩画、划船。'],
+ t:['Купаться лучше в июле–августе. Вода слегка солоноватая.','Swim in July–August. The water is slightly salty.','Июль–августта сууга түшкөн жакшы. Суусу бир аз туздуу.','7–8月游泳最佳，湖水略带咸味。']},
+{id:6,cat:'nature',e:'🏜️',lat:42.1553,lng:77.0233,c:['#c05621','#f6ad55'],s:S.ms,
+ n:['Каньон Сказка','Skazka (Fairy Tale) Canyon','Жомок капчыгайы','童话峡谷'],
+ d:['Красные скалы причудливых форм на южном берегу Иссык-Куля.','Red rock formations of odd shapes on the south shore of Issyk-Kul.','Ысык-Көлдүн түштүк жээгиндеги кызыл аска-зоолор.','伊塞克湖南岸造型奇特的红色岩石。'],
+ t:['Лучше на закате. Берите воду и головной убор.','Best at sunset. Bring water and a hat.','Күн батарда эң кооз. Суу жана баш кийим алыңыз.','日落时最美。请带水和帽子。']},
+{id:7,cat:'city',e:'⛪',lat:42.4907,lng:78.3936,c:['#553c9a','#9f7aea'],s:S.all,
+ n:['Каракол','Karakol','Каракол','卡拉科尔'],
+ d:['База для треков: деревянная церковь, дунганская мечеть, воскресный рынок.','Trekking base: wooden church, Dungan mosque, Sunday animal market.','Жөө жүрүштөрдүн базасы: жыгач чиркөө, дунган мечити, жекшемби базары.','徒步大本营：木制教堂、东干清真寺、周日牲畜市场。'],
+ t:['Рядом горнолыжная база и ущелье Ак-Суу.','A ski resort and Ak-Suu gorge are nearby.','Жакын жерде тоо лыжа базасы жана Ак-Суу капчыгайы бар.','附近有滑雪场和阿克苏峡谷。']},
+{id:8,cat:'nature',e:'🪨',lat:42.3400,lng:78.1900,c:['#9b2c2c','#fc8181'],s:S.sum,
+ n:['Джети-Огуз','Jeti-Oguz','Жети-Өгүз','杰蒂奥古兹'],
+ d:['Скалы «Семь быков» и «Разбитое сердце», горячие источники.','“Seven Bulls” and “Broken Heart” rocks, hot springs.','«Жети өгүз» жана «Сынган жүрөк» аскалары, ысык булактар.','“七头牛”和“破碎之心”岩石，还有温泉。'],
+ t:['Хорошо для юрт-кемпа и конных прогулок.','Great for a yurt camp and horse rides.','Боз үйдө жатуу жана ат минүү үчүн жакшы.','适合住蒙古包、骑马。']},
+{id:9,cat:'nature',e:'🐎',lat:41.8400,lng:75.1100,c:['#2c7a7b','#81e6d9'],s:S.js,
+ n:['Озеро Сон-Куль','Song-Kul Lake','Соң-Көл','松库尔湖'],
+ d:['Озеро на высоте 3000 м: летом табуны и юрты чабанов.','A lake at 3,000 m: summer horse herds and herder yurts.','3000 м бийиктиктеги көл: жайында жылкылар жана боз үйлөр.','海拔3000米的湖泊：夏季有马群和牧民蒙古包。'],
+ t:['Ночью около 0°C. Дороги только летом.','Nights near 0°C. Roads open only in summer.','Түнкүсүн 0°C чамасында. Жолдор жайында гана ачык.','夜间接近0°C，道路仅夏季通行。']},
+{id:10,cat:'culture',e:'🕌',lat:40.8270,lng:75.2870,c:['#744210','#d69e2e'],s:S.sum,
+ n:['Таш-Рабат','Tash Rabat','Таш-Рабат','塔什拉巴特'],
+ d:['Каменный караван-сарай XV века в горной долине.','A 15th-century stone caravanserai in a mountain valley.','Тоо өрөөнүндөгү XV кылымдагы таш керван-сарай.','山谷中的15世纪石砌商队驿站。'],
+ t:['Дорога тяжёлая — нужен внедорожник.','Rough road — use a 4x4.','Жол оор — внедорожник керек.','路况较差，建议乘越野车。']},
+{id:11,cat:'culture',e:'🕋',lat:40.5283,lng:72.7985,c:['#975a16','#ecc94b'],s:S.all,
+ n:['Сулайман-Тоо (Ош)','Sulaiman-Too (Osh)','Сулайман-Тоо (Ош)','苏莱曼山（奥什）'],
+ d:['Священная гора в Оше, объект ЮНЕСКО, виды на город.','Sacred mountain in Osh, a UNESCO site with city views.','Оштогу ыйык тоо, ЮНЕСКО объектиси, шаардын көрүнүшү.','奥什的圣山，联合国教科文组织遗产，可俯瞰全城。'],
+ t:['Лучше утром или на закате.','Go in the morning or at sunset.','Эртең менен же күн батарда барган жакшы.','建议早晨或日落时前往。']},
+{id:12,cat:'nature',e:'🌰',lat:41.3333,lng:72.9333,c:['#22543d','#48bb78'],s:S.mo,
+ n:['Арсланбоб','Arslanbob','Арстанбап','阿尔斯兰博布'],
+ d:['Крупнейший ореховый лес мира, водопады и тихие деревни.','The world’s largest walnut forest, waterfalls and quiet villages.','Дүйнөдөгү эң чоң жаңгак токою, шаркыратмалар жана тынч айылдар.','世界最大的核桃林，有瀑布和宁静的村庄。'],
+ t:['Осенью — сезон сбора орехов.','Autumn is walnut harvest season.','Күзүндө жаңгак терүү мезгили.','秋季是核桃采收季。']},
+{id:13,cat:'market',e:'🛍️',lat:42.9453,lng:74.6358,c:['#c53030','#f56565'],s:S.all,
+ n:['Рынок Дордой','Dordoi Bazaar','Дордой базары','多尔多伊市场'],
+ d:['Один из крупнейших рынков Центральной Азии.','One of Central Asia’s biggest markets.','Борбордук Азиядагы эң чоң базарлардын бири.','中亚最大的市场之一。'],
+ t:['Приходите с утра — цены ниже.','Go in the morning — prices are lower.','Эртең менен барыңыз — баа арзан.','早上去，价格更低。']},
+{id:14,cat:'city',e:'🏞️',lat:41.4287,lng:75.9911,c:['#2b6cb0','#90cdf4'],s:S.ms,
+ n:['Нарын','Naryn','Нарын','纳伦'],
+ d:['Город в долине реки Нарын — остановка по пути к Сон-Кулю и Таш-Рабату.','A town in the Naryn valley, a stop on the way to Song-Kul and Tash Rabat.','Нарын өрөөнүндөгү шаар — Соң-Көл жана Таш-Рабатка баратканда токтоочу жер.','纳伦河谷中的城镇，去松库尔湖和塔什拉巴特的中转站。'],
+ t:['Удобно заночевать и купить продукты.','A good place to overnight and stock up.','Түнөп, азык-түлүк сатып алууга ыңгайлуу.','适合过夜和采购补给。']},
+{id:15,cat:'city',e:'🐑',lat:42.2167,lng:75.7500,c:['#744210','#ed8936'],s:S.sum,
+ n:['Кочкор','Kochkor','Кочкор','科奇科尔'],
+ d:['Центр мастериц войлока и ширдаков, ворота к Сон-Кулю.','A hub of felt and shyrdak makers, gateway to Song-Kul.','Кийиз жана ширдак устачыларынын борбору, Соң-Көлгө дарбаза.','毛毡和什尔达克工艺中心，通往松库尔湖的门户。'],
+ t:['Покупайте ширдаки напрямую у мастериц.','Buy shyrdaks directly from the makers.','Ширдакты түз эле устачылардан алыңыз.','直接向手工艺人购买什尔达克。']},
+{id:16,cat:'nature',e:'♨️',lat:42.3333,lng:78.4833,c:['#2c7a7b','#4fd1c5'],s:S.ms,
+ n:['Алтын-Арашан','Altyn-Arashan','Алтын-Арашан','阿尔滕阿拉尚'],
+ d:['Долина горячих источников над Караколом, старт трека к Ала-Куль.','Hot-spring valley above Karakol, start of the Ala-Kul trek.','Каракол үстүндөгү ысык булактар өрөөнү, Ала-Көл жолунун башталышы.','卡拉科尔上方的温泉山谷，阿拉湖徒步的起点。'],
+ t:['Доехать можно на вахтовом грузовике или дойти пешком.','Reach it by 4x4 truck or on foot.','Жүк ташуучу унаа менен же жөө барса болот.','可乘越野卡车或徒步前往。']},
+{id:17,cat:'nature',e:'💎',lat:41.8333,lng:72.0000,c:['#2c5282','#63b3ed'],s:S.ms,
+ n:['Сары-Челек','Sary-Chelek','Сары-Челек','萨雷切列克'],
+ d:['Заповедник с чистым озером среди елей на западе страны.','A reserve with a crystal-clear lake among spruce forests in the west.','Батыштагы карагайлар арасындагы таза көлү бар коругу.','西部云杉林中拥有清澈湖泊的保护区。'],
+ t:['Нужен пропуск — оформите заранее или на месте.','A permit is required — arrange it in advance or on site.','Уруксат керек — алдын ала же ошол жерден алыңыз.','需办理通行证，可提前或现场办理。']}
+];
+const byId=id=>PLACES.find(p=>p.id===id);
+
+const U={
+ one:['1 шт','1 pc','1 даана','1个'],kg:['1 кг','1 kg','1 кг','1公斤'],l:['1 л','1 L','1 л','1升'],
+ pt:['порция','portion','порция','一份'],n:['ночь','night','түн','每晚'],pp:['чел.','person','киши','每人']
+};
+const PRICES=[
+{id:'bread',c:'food',e:'🍞',n:['Хлеб / лепёшка','Bread / flatbread','Нан / токоч','面包 / 馕'],u:U.one,p:30},
+{id:'milk',c:'food',e:'🥛',n:['Молоко','Milk','Сүт','牛奶'],u:U.l,p:90},
+{id:'eggs',c:'food',e:'🥚',n:['Яйца','Eggs','Жумуртка','鸡蛋'],u:['10 шт','10 pcs','10 даана','10个'],p:120},
+{id:'water',c:'food',e:'💧',n:['Вода в бутылке','Bottled water','Суу (бөтөлкө)','瓶装水'],u:['1,5 л','1.5 L','1,5 л','1.5升'],p:50},
+{id:'beef',c:'food',e:'🥩',n:['Говядина','Beef','Уй эти','牛肉'],u:U.kg,p:650},
+{id:'potato',c:'food',e:'🥔',n:['Картофель','Potatoes','Картошка','土豆'],u:U.kg,p:50},
+{id:'apple',c:'food',e:'🍎',n:['Яблоки','Apples','Алма','苹果'],u:U.kg,p:110},
+{id:'apricot',c:'food',e:'🍑',n:['Курага','Dried apricots','Кургатылган өрүк','杏干'],u:U.kg,p:420},
+{id:'honey',c:'food',e:'🍯',n:['Мёд','Honey','Бал','蜂蜜'],u:U.kg,p:800},
+{id:'plov',c:'eat',e:'🍚',n:['Плов','Plov','Палоо','手抓饭'],u:U.pt,p:270},
+{id:'lagman',c:'eat',e:'🍜',n:['Лагман','Lagman noodles','Лагман','拉条子'],u:U.pt,p:260},
+{id:'manty',c:'eat',e:'🥟',n:['Манты','Manty dumplings','Манты','曼塔饺子'],u:U.one,p:60},
+{id:'shash',c:'eat',e:'🍢',n:['Шашлык','Shashlik skewer','Шашлык','烤肉串'],u:['шпажка','skewer','шиш','每串'],p:170},
+{id:'samsa',c:'eat',e:'🥐',n:['Самса','Samsa pastry','Самса','萨姆萨'],u:U.one,p:70},
+{id:'tea',c:'eat',e:'🫖',n:['Чай','Tea','Чай','茶'],u:['чайник','pot','чайнек','一壶'],p:80},
+{id:'coffee',c:'eat',e:'☕',n:['Капучино','Cappuccino','Капучино','卡布奇诺'],u:['чашка','cup','чыны','一杯'],p:180},
+{id:'kumys',c:'eat',e:'🥛',n:['Кумыс / максым','Kumis / maksym','Кымыз / максым','马奶酒 / 麦克辛'],u:U.l,p:170},
+{id:'bus',c:'move',e:'🚌',n:['Городской автобус','City bus','Шаар автобусу','市内公交'],u:['поездка','ride','жол','每次'],p:55},
+{id:'taxi',c:'move',e:'🚕',n:['Такси по Бишкеку','Taxi in Bishkek','Бишкекте такси','比什凯克出租车'],u:['~5 км','~5 km','~5 км','约5公里'],p:250},
+{id:'marsh',c:'move',e:'🚐',n:['Маршрутка Бишкек – Каракол','Minibus Bishkek – Karakol','Маршрутка Бишкек – Каракол','比什凯克—卡拉科尔小巴'],u:['1 место','1 seat','1 орун','每座'],p:700},
+{id:'taxiK',c:'move',e:'🚖',n:['Такси Бишкек – Чолпон-Ата','Taxi Bishkek – Cholpon-Ata','Такси Бишкек – Чолпон-Ата','比什凯克—乔尔蓬阿塔出租车'],u:['авто','car','унаа','每车'],p:5500},
+{id:'fuel',c:'move',e:'⛽',n:['Бензин АИ-92','Gasoline (92)','Бензин АИ-92','92号汽油'],u:U.l,p:75},
+{id:'hostel',c:'misc',e:'🛏️',n:['Хостел','Hostel','Хостел','青年旅舍'],u:U.n,p:1000},
+{id:'hotel',c:'misc',e:'🏨',n:['Гостиница 3★','3★ hotel','3★ мейманкана','三星酒店'],u:U.n,p:4000},
+{id:'yurt',c:'misc',e:'⛺',n:['Юрта с питанием','Yurt with meals','Тамактуу боз үй','含餐蒙古包'],u:U.n,p:2500},
+{id:'sim',c:'misc',e:'📱',n:['SIM-карта с интернетом','SIM card with data','Интернеттүү SIM-карта','带流量SIM卡'],u:['месяц','month','ай','每月'],p:500},
+{id:'horse',c:'misc',e:'🐴',n:['Прогулка на лошади','Horse riding','Ат минүү','骑马'],u:['час','hour','саат','每小时'],p:600},
+{id:'park',c:'misc',e:'🎟️',n:['Вход в нацпарк','National park entry','Улуттук парккка кирүү','国家公园门票'],u:U.pp,p:150},
+{id:'felt',c:'souv',e:'🧶',n:['Войлочные тапочки','Felt slippers','Кийиз тапочка','毡拖鞋'],u:['пара','pair','жуп','每双'],p:600},
+{id:'kalpak',c:'souv',e:'🎩',n:['Ак-калпак (шапка)','Ak-kalpak hat','Ак калпак','阿克卡尔帕克帽'],u:U.one,p:900},
+{id:'shyrdak',c:'souv',e:'🧵',n:['Ширдак (коврик)','Shyrdak felt rug','Ширдак','什尔达克地毯'],u:U.one,p:3500},
+{id:'magnet',c:'souv',e:'🧲',n:['Магнит','Fridge magnet','Магнит','冰箱贴'],u:U.one,p:150}
+];
+/* Маршруты: список дней, в каждом дне — id мест */
+const ROUTES={
+ 3:{days:[[1,2,3],[4,5],[6,7]],
+    note:['Бишкек и Иссык-Куль — классический короткий маршрут.','Bishkek and Issyk-Kul — the classic short trip.','Бишкек жана Ысык-Көл — кыска классикалык маршрут.','比什凯克和伊塞克湖——经典短途线路。']},
+ 5:{days:[[1,2],[3,4],[5,6],[7,16],[8]],
+    note:['Добавляет Каракол и горячие источники.','Adds Karakol and the hot springs.','Каракол жана ысык булактар кошулат.','增加卡拉科尔和温泉。']},
+ 7:{days:[[1,2],[3,4],[5,6],[7,8],[15,9],[14,10],[13]],
+    note:['Полный круг: Иссык-Куль, Кочкор, Сон-Куль, Нарын и Таш-Рабат.','Full loop: Issyk-Kul, Kochkor, Song-Kul, Naryn and Tash Rabat.','Толук айлампа: Ысык-Көл, Кочкор, Соң-Көл, Нарын жана Таш-Рабат.','完整环线：伊塞克湖、科奇科尔、松库尔湖、纳伦和塔什拉巴特。']}
+};
+
+/* ================= УТИЛИТЫ ================= */
+const $=s=>document.querySelector(s);
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+function detectLang(){
+  const s=store.get('lang',null); if(s&&T[s])return s;
+  const n=(navigator.language||'en').toLowerCase();
+  if(n.startsWith('ru'))return 'ru'; if(n.startsWith('ky'))return 'ky'; if(n.startsWith('zh'))return 'zh';
+  return 'en';
+}
+let lang=detectLang();
+let rate=Number(store.get('rate',87.5))||87.5;
+const tr=k=>T[lang][k];
+const li=a=>a[LI[lang]];
+const fmt=n=>Math.round(n).toLocaleString(LOC[lang]);
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
+const hotelUrl=p=>`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(p.n[1]+', Kyrgyzstan')}`;
+const GIS_REGION=new Set([1,2,3,4,5,6,7,8,13]); // Бишкек и район Иссык-Куля
+const BUS_CITY=new Set([1,2,13]);                // места внутри Бишкека
+const routeUrl=p=>GIS_REGION.has(p.id)
+  ?`https://2gis.kg/bishkek?m=${p.lng},${p.lat}/15`
+  :`https://2gis.kg/?m=${p.lng},${p.lat}/13`;
+const busUrl=p=>`https://2gis.kg/bishkek/routeSearch/rsType/bus/to/${p.lng},${p.lat}`;
+
+
+function applyStatic(){
+  document.documentElement.lang=lang==='zh'?'zh-CN':lang;
+  document.querySelectorAll('[data-i]').forEach(el=>{const v=T[lang][el.dataset.i];if(typeof v==='string')el.textContent=v});
+  document.querySelectorAll('[data-ph]').forEach(el=>{el.placeholder=T[lang][el.dataset.ph]||''});
+  $('#langSel').value=lang;
+  $('#rateBadge').textContent=`1 $ = ${rate} ${tr('som')}`;
+  $('#tips').innerHTML=tr('tips').map(x=>`<div class="phrase"><span>${x}</span></div>`).join('');
+  $('#phrases').innerHTML=tr('phrases').map((p,i)=>
+    `<div class="phrase"><span>${p}</span><b>${lang==='ky'?T.ru.phrases[i]:KY[i]}</b></div>`).join('');
+}
+
+/* ================= НАВИГАЦИЯ ================= */
+let map;
+function show(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+v));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='map'&&map)setTimeout(()=>map.invalidateSize(),50);
+}
+$('#nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b)show(b.dataset.v)});
+
+/* ================= КАРТА ================= */
+const markers={};
+let curCat='all',userMarker=null,curPlace=null,routeLayer=null;
+function initMap(){
+  if(typeof L==='undefined'){$('#nomap').style.display='grid';return}
+  map=L.map('map',{zoomControl:false}).setView([41.9,74.8],7);
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
+  PLACES.forEach(p=>{
+    const icon=L.divIcon({className:'',html:`<div class="pin ${p.cat}"><span>${p.e}</span></div>`,iconSize:[38,38],iconAnchor:[19,38]});
+    const m=L.marker([p.lat,p.lng],{icon}).addTo(map);
+    m.on('click',()=>openSheet(p));
+    markers[p.id]=m;
+  });
+  map.on('click',closeSheet);
+  setTimeout(()=>map.invalidateSize(),200);
+}
+function renderChips(){
+  $('#mapChips').innerHTML=Object.entries(tr('cats')).map(([k,v])=>`<button class="chip ${k===curCat?'on':''}" data-k="${k}">${v}</button>`).join('');
+}
+$('#mapChips').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b||!map)return;
+  curCat=b.dataset.k;renderChips();
+  const pts=[];
+  PLACES.forEach(p=>{
+    if(curCat==='all'||p.cat===curCat){markers[p.id].addTo(map);pts.push([p.lat,p.lng])}
+    else map.removeLayer(markers[p.id]);
+  });
+  if(pts.length)map.fitBounds(pts,{padding:[50,50],maxZoom:10});
+  closeSheet();
+});
+function openSheet(p){
+  curPlace=p;
+  $('#sTitle').textContent=p.e+' '+li(p.n);
+  $('#sTags').innerHTML=`<span class="tag">${tr('cats')[p.cat]}</span><span class="tag">🗓 ${li(p.s)}</span>`;
+  $('#sDesc').textContent=li(p.d);
+  $('#sTip').textContent='💡 '+li(p.t);
+  $('#sRoute').href=routeUrl(p);
+  $('#sHotel').href=hotelUrl(p);
+  $('#sBus').href=busUrl(p);
+$('#sBus').style.display=BUS_CITY.has(p.id)?'block':'none';
+  $('#sheet').classList.add('open');
+  map.flyTo([p.lat,p.lng],Math.max(map.getZoom(),10),{duration:.7});
+}
+function closeSheet(){$('#sheet').classList.remove('open')}
+$('#sheetX').onclick=closeSheet;
+$('#sMore').onclick=()=>show('places');
+$('#locBtn').onclick=()=>{
+  if(!navigator.geolocation||!map){toast(tr('geoNo'));return}
+  toast(tr('geo'));
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const ll=[pos.coords.latitude,pos.coords.longitude];
+    if(userMarker)map.removeLayer(userMarker);
+    userMarker=L.marker(ll,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(map);
+    map.flyTo(ll,12);
+  },()=>toast(tr('geoErr')),{enableHighAccuracy:true,timeout:10000});
+};
+/* переход к месту из любого списка */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-go]');if(!b)return;
+  const p=byId(Number(b.dataset.go));if(!p)return;
+  show('map');
+  if(map)setTimeout(()=>{map.invalidateSize();openSheet(p)},120);
+});
+
+/* ================= ЦЕНЫ ================= */
+let pCat='all',basket=store.get('basket',{});
+function renderPCats(){
+  $('#pCats').innerHTML=Object.entries(tr('pcats')).map(([k,v])=>`<button class="chip ${k===pCat?'on':''}" data-k="${k}">${v}</button>`).join('');
+}
+$('#pCats').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;pCat=b.dataset.k;renderPCats();renderPrices()});
+$('#pSearch').addEventListener('input',renderPrices);
+function renderPrices(){
+  const q=$('#pSearch').value.trim().toLowerCase();
+  const list=PRICES.filter(x=>(pCat==='all'||x.c===pCat)&&(!q||li(x.n).toLowerCase().includes(q)));
+  $('#pList').innerHTML=list.length?list.map(x=>`
+    <div class="item">
+      <div class="ico">${x.e}</div>
+      <div class="info"><b>${li(x.n)}</b><small>${li(x.u)}</small></div>
+      <div class="price"><b>${fmt(x.p)} ${tr('som')}</b><small>≈ ${(x.p/rate).toFixed(1)} $</small></div>
+      <div class="qty">
+        ${basket[x.id]?`<button data-a="-" data-id="${x.id}" aria-label="−">−</button><span>${basket[x.id]}</span>`:''}
+        <button class="plus" data-a="+" data-id="${x.id}" aria-label="+">+</button>
+      </div>
+    </div>`).join(''):`<div class="note">${tr('nothing')}</div>`;
+  updateBasket();
+}
+$('#pList').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-id]');if(!b)return;
+  const id=b.dataset.id;
+  basket[id]=(basket[id]||0)+(b.dataset.a==='+'?1:-1);
+  if(basket[id]<=0)delete basket[id];
+  store.set('basket',basket);renderPrices();
+});
+function updateBasket(){
+  let sum=0;
+  for(const id in basket){const p=PRICES.find(x=>x.id===id);if(p)sum+=p.p*basket[id]}
+  $('#bSom').textContent=fmt(sum)+' '+tr('som');
+  $('#bUsd').textContent=sum?'≈ '+(sum/rate).toFixed(1)+' $':'';
+}
+$('#bClear').onclick=()=>{basket={};store.set('basket',basket);renderPrices()};
+
+/* ================= МЕСТА ================= */
+function renderPlaces(){
+  $('#placesList').innerHTML=PLACES.map(p=>`
+    <div class="place">
+      <div class="cover" style="--c1:${p.c[0]};--c2:${p.c[1]}">${p.e}</div>
+      <div class="body">
+        <h3>${li(p.n)}</h3>
+        <span class="tag">${tr('cats')[p.cat]}</span><span class="tag">🗓 ${li(p.s)}</span>
+        <p>${li(p.d)}</p>
+        <p>💡 ${li(p.t)}</p>
+        <div class="btns">
+          <button class="btn" data-go="${p.id}">${tr('onMap')}</button>
+          <a class="btn alt" target="_blank" rel="noopener" href="${routeUrl(p)}">${tr('route')}</a>
+          <a class="btn alt" target="_blank" rel="noopener" href="${hotelUrl(p)}">${tr('hotels')}</a>           ${BUS_CITY.has(p.id)?`<a class="btn alt" target="_blank" rel="noopener" href="${busUrl(p)}">${tr('bus')}</a>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ================= МАРШРУТЫ ================= */
+let rDays=3;
+function renderRoutes(){
+  $('#rSeg').innerHTML=[3,5,7].map(n=>`<button class="chip ${n===rDays?'on':''}" data-n="${n}">${DAYSL[lang](n)}</button>`).join('');
+  const R=ROUTES[rDays];
+  $('#rNote').textContent=li(R.note);
+  $('#rList').innerHTML=R.days.map((ids,i)=>`
+    <div class="card">
+      <h2>${DAYL[lang](i+1)}</h2>
+      ${ids.map(id=>{const p=byId(id);return `
+        <div class="item go" data-go="${id}">
+          <div class="ico">${p.e}</div>
+          <div class="info"><b>${li(p.n)}</b><small>${li(p.s)}</small></div>
+          <span>›</span>
+        </div>`}).join('')}
+    </div>`).join('');
+}
+$('#rSeg').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;rDays=Number(b.dataset.n);renderRoutes()});
+function clearRoute(){if(routeLayer&&map){map.removeLayer(routeLayer);routeLayer=null}}
+$('#rShow').onclick=()=>{
+  if(!map){toast(tr('nomap'));return}
+  clearRoute();
+  const ll=[].concat(...ROUTES[rDays].days).map(id=>{const p=byId(id);return [p.lat,p.lng]});
+  routeLayer=L.polyline(ll,{color:'#e8412c',weight:4,dashArray:'8 8'}).addTo(map);
+  show('map');
+  setTimeout(()=>{map.invalidateSize();map.fitBounds(ll,{padding:[50,50]})},120);
+};
+$('#rHide').onclick=clearRoute;
+
+/* ================= ИНСТРУМЕНТЫ ================= */
+function initTools(){
+  const som=$('#cSom'),usd=$('#cUsd'),r=$('#cRate');
+  r.value=rate;
+  som.oninput=()=>{usd.value=som.value?(som.value/rate).toFixed(2):''};
+  usd.oninput=()=>{som.value=usd.value?Math.round(usd.value*rate):''};
+  r.oninput=()=>{
+    const v=parseFloat(r.value);
+    if(v>0){rate=v;store.set('rate',v);$('#rateBadge').textContent=`1 $ = ${v} ${tr('som')}`;renderPrices();som.oninput()}
+  };
+}
+
+/* ================= ЯЗЫК ================= */
+function renderAll(){
+  applyStatic();renderChips();renderPCats();renderPrices();renderPlaces();renderRoutes();
+  if(curPlace&&map&&$('#sheet').classList.contains('open'))openSheet(curPlace);
+}
+$('#langSel').onchange=e=>{lang=e.target.value;store.set('lang',lang);renderAll()};
+
+/* ================= PWA: иконка, манифест, офлайн ================= */
+function makeIcon(size){
+  const c=document.createElement('canvas');c.width=c.height=size;
+  const x=c.getContext('2d'),s=size/512;
+  const g=x.createLinearGradient(0,0,size,size);g.addColorStop(0,'#0f3d3e');g.addColorStop(1,'#2b8a86');
+  x.fillStyle=g;x.fillRect(0,0,size,size);
+  x.fillStyle='#f2b632';x.beginPath();x.arc(256*s,190*s,86*s,0,7);x.fill();
+  x.fillStyle='#fff';x.beginPath();x.arc(256*s,190*s,34*s,0,7);x.fill();
+  x.globalAlpha=.92;x.beginPath();x.moveTo(60*s,430*s);x.lineTo(190*s,270*s);x.lineTo(245*s,330*s);x.lineTo(340*s,210*s);x.lineTo(452*s,430*s);x.closePath();x.fill();
+  x.globalAlpha=.35;x.beginPath();x.moveTo(0,430*s);x.lineTo(120*s,330*s);x.lineTo(190*s,400*s);x.lineTo(260*s,340*s);x.lineTo(400*s,430*s);x.closePath();x.fill();
+  return c.toDataURL('image/png');
+}
+try{
+  const i192=makeIcon(192),i512=makeIcon(512);
+  const addLink=(rel,href,extra)=>{const l=document.createElement('link');l.rel=rel;l.href=href;if(extra)l.sizes=extra;document.head.appendChild(l)};
+  addLink('icon',i192,'192x192');
+  addLink('apple-touch-icon',i512,'512x512');
+  const manifest={
+    name:'Kyrgyzstan Guide',short_name:'Kyrgyzstan',
+    start_url:location.href.split('#')[0],scope:location.href.split('#')[0].replace(/[^/]*$/,''),
+    display:'standalone',background_color:'#0f3d3e',theme_color:'#0f3d3e',
+    icons:[{src:i192,sizes:'192x192',type:'image/png'},{src:i512,sizes:'512x512',type:'image/png'}]
+  };
+  addLink('manifest',URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'})));
+}catch(e){}
+
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('#installBtn').style.display='block'});
+$('#installBtn').onclick=async()=>{
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();await deferredPrompt.userChoice;
+  deferredPrompt=null;$('#installBtn').style.display='none';
+};
+function netState(){$('#net').style.display=navigator.onLine?'none':'block'}
+window.addEventListener('online',netState);window.addEventListener('offline',netState);netState();
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+}
+
+/* ================= СТАРТ ================= */
+initTools();renderAll();
+(function(){
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  const name='Мой город Бишкек';
+  $('#myCityBtn').href=ios
+    ?`https://www.google.com/search?q=${encodeURIComponent(name+' App Store')}`
+    :`https://play.google.com/store/search?q=${encodeURIComponent(name)}&c=apps`;
+})();
+window.addEventListener('load',initMap);
+window.addEventListener('resize',()=>map&&map.invalidateSize());
+</script>
+</body>
+</html>
